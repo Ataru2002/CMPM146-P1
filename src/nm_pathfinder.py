@@ -25,6 +25,7 @@ def find_path (source_point, destination_point, mesh):
             for key in looper.keys():
                 graph[key] = looper[key]
         start += 1
+        start += 3
     
     path = []
     boxes = {}
