@@ -15,6 +15,7 @@ def find_path (source_point, destination_point, mesh):
     """
     # testcode
     start = 0
+    start2 = 0
     detail_points = {}
     point_construction(detail_points)
     # Extract the graph out of the mesh
