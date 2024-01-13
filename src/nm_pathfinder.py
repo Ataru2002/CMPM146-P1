@@ -21,12 +21,9 @@ def find_path (source_point, destination_point, mesh):
     dest = findBox(destination_point, mesh)    #variable to hold destination (second click) location
 
     path = []
-    path_queue = Queue()
     boxes = {}
 
-    path_queue, boxes = BFS(start, dest, mesh)
-
-
+    boxes = BFS(start, dest, mesh)
 
     return path, boxes
 
@@ -72,7 +69,7 @@ def BFS(source, destination, mesh):
         return
     
 
-    return explored, from_nodes
+    return from_nodes
 
 
 
