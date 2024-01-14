@@ -1,5 +1,6 @@
 import math
 import heapq
+from queue import PriorityQueue
 
 def find_path (source_point, destination_point, mesh):
 
@@ -39,18 +40,29 @@ def find_path (source_point, destination_point, mesh):
         print("No path!")
         return path, boxes.keys()
     point_construction(detail_points, box_point, box_graph, source_box, source_point)
+    box_point[source_point] = source_box
+    box_point[destination_point] = destination_box
     path_table = {}
+    #print(detail_points[destination_box])
+    print(destination_box)
+    print(box_graph[destination_box])
+    print(destination_point)
+    print(source_point)
     A_star(detail_points, path_table, box_graph, source_box, source_point, destination_box, destination_point)
     starter = destination_point
     test = 0
-    box_point[source_point] = source_box
-    box_point[destination_point] = destination_box
+    
     while starter in path_table and path_table[starter] != -1:
         path.insert(0, starter)
         boxes[box_point[starter]] = box_point[starter]
         starter = path_table[starter]
     
+    print(path)
     if starter != source_point:
+        #print(starter)
+        #print(destination_point)
+        #print(source_point)
+        #print(path)
         print("No path!")
         return path, boxes.keys()
     
@@ -65,34 +77,42 @@ def euclidian_distance(u, v):
 
 def A_star(detail_points, path_table, box_graph, source_box, source_point, destination_box, destination_point):
     dist = {}
-    heap = []
-
+    #heap = []
+    heap = PriorityQueue()
     for i in detail_points.values():
         dist[i] = 1000000000
         path_table[i] = -1
-    heapq.heapify(heap)
-    heapq.heappush(heap, (0, source_box, source_point))
+    #heapq.heapify(heap)
+    #heapq.heappush(heap, (0, source_box, source_point))
+    heap.put((0, source_box, source_point))
     dist[source_point] = 0
 
-    while len(heap) > 0:
-        current_point = heap[0]
-        heapq.heappop(heap)
-        
+    while not heap.empty():
+        #current_point = heap[0]
+        #heapq.heappop(heap)
+        current_point = heap.get()
+
+        #print(current_point)
+        #print(heap)
+
         if current_point[1] == destination_box:
             path_table[destination_point] = current_point[2]
+            print(destination_point)
             break
 
-        if current_point[0] != dist[current_point[2]]: 
-           continue
+        #if current_point[0] != dist[current_point[2]]: 
+        #   continue
 
         for i in box_graph[current_point[1]]:
             point1 = current_point[2]
             point2 = detail_points[i]
-            cost_current = euclidian_distance(point1, point2) + dist[point1] + euclidian_distance(point2, destination_point)
+            cost_current = euclidian_distance(point1, point2) + dist[point1] 
+            #+ euclidian_distance(point2, destination_point)
             if point2 not in dist or cost_current < dist[point2]:
                 dist[point2] = cost_current
                 path_table[point2] = point1
-                heapq.heappush(heap, (dist[point2], i, detail_points[i]))
+                #heapq.heappush(heap, (dist[point2], i, detail_points[i]))
+                heap.put((dist[point2], i, detail_points[i]))
 
 def point_construction(detail_points, box_point, box_graph, source_box, source_point):
     # construction
