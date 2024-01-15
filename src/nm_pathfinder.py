@@ -26,9 +26,7 @@ def find_path (source_point, destination_point, mesh):
     source_box = ()
     destination_box = ()
     box_point = {}
-    # Extract the graph out of the mesh
     box_graph = {}
-    graph = {}
     for looper in mesh.values():
         if start == 1:
             for key in looper.keys():
@@ -38,13 +36,6 @@ def find_path (source_point, destination_point, mesh):
                 if key[0] <= destination_point[0] and destination_point[0] <= key[1] and key[2] <= destination_point[1] and destination_point[1] <= key[3]:
                     destination_box = key
         start += 1
-
-    #debug zone
-    #print(detail_points[destination_box])
-    #print(destination_box)
-    #print(box_graph[destination_box])
-    #print(destination_point)
-    #print(source_point)
         
     if source_box == () or destination_box == ():
         print("No path!")
@@ -54,63 +45,105 @@ def find_path (source_point, destination_point, mesh):
     
     box_point[source_point] = source_box
     box_point[destination_point] = destination_box
-    path_table = {}
-    A_star(detail_points, ranges, path_table, box_graph, box_point, source_box, source_point, destination_box, destination_point)
-    starter = destination_point
-    test = 0
-    
-    while starter in path_table and path_table[starter] != -1:
+    path_tablef = {}
+    path_tableb = {}
+    meetup = A_star(detail_points, ranges, path_tablef, path_tableb, box_graph, box_point, source_box, source_point, destination_box, destination_point)
+
+    starter = meetup
+    while starter in path_tablef and path_tablef[starter] != -1:
         path.insert(0, starter)
         boxes[box_point[starter]] = box_point[starter]
-        starter = path_table[starter]
-    
-    print(path)
+        starter = path_tablef[starter]
+
     if starter != source_point:
         print("No path!")
         return path, boxes.keys()
-    
-    boxes[box_point[starter]] = box_point[starter]
     path.insert(0, starter)
-    #path = []
+    boxes[box_point[starter]] = box_point[starter]
+
+    
+    
+    starter = meetup
+    while starter in path_tableb and path_tableb[starter] != -1:
+        path.append(starter)
+        boxes[box_point[starter]] = box_point[starter]
+        starter = path_tableb[starter]
+    if starter != destination_point:
+        print("No path!")
+        return path, boxes.keys()
+    path.append(starter)
+    boxes[box_point[starter]] = box_point[starter]
+
+    
+
     return path, boxes.keys()
 
 def euclidian_distance(u, v):
     return math.sqrt(((u[0] - v[0]) * (u[0] - v[0])) + (((u[1] - v[1]) * (u[1] - v[1]))))
 
-def A_star(detail_points, ranges, path_table, box_graph, box_point, source_box, source_point, destination_box, destination_point):
-    dist = {}
+def A_star(detail_points, ranges, path_tablef, path_tableb, box_graph, box_point, source_box, source_point, destination_box, destination_point):
+    distf = {}
+    distb = {}
     heap = PriorityQueue()
-    for i in detail_points.values():
-        dist[i] = math.inf
-        path_table[i] = -1
     
     detail_points[source_box] = source_point
     box_point[source_point] = source_box
-    heap.put((0, source_box, source_point))
-    dist[source_point] = 0
+    heap.put((0, source_box, source_point, destination_box))
+    heap.put((0, destination_box, destination_point, source_box))
+    distf[source_point] = 0
+    distb[destination_point] = 0
+
+    print(source_point)
+    print(destination_point)
 
     while not heap.empty():
-        current_point = heap.get()
+        current_instance = heap.get()
+        
+        current_dist = current_instance[0]
+        current_box = current_instance[1]
+        current_point = current_instance[2]
+        current_destination = current_instance[3]
 
-        if current_point[0] != dist[current_point[2]]: 
-           continue
+        if current_destination == destination_box:
+            if current_point in distf and current_dist != distf[current_point]: 
+                continue
+        if current_destination == source_box:
+            if current_point in distb and current_dist != distb[current_point]:
+                continue   
+        
+        
+        if current_destination == destination_box:
+            if current_point in path_tableb:
+                return current_point
+        if current_destination == source_box:
+            if current_point in path_tablef:
+                return current_point
 
-        if current_point[1] == destination_box:
-            path_table[destination_point] = current_point[2]
-            print(destination_point)
-            break        
-
-        for i in box_graph[current_point[1]]:
-            relationship = (current_point[1], i)
+        for i in box_graph[current_box]:
+            relationship = (current_box, i)
             x_range = ranges[relationship][0]
             y_range = ranges[relationship][1]
-            point1 = current_point[2]
+            point1 = current_point
             point2 = point_identifier(point1, i, detail_points, box_point, x_range, y_range)
-            cost_current = euclidian_distance(point1, point2) + dist[point1] + euclidian_distance(point2, destination_point)
-            if point2 not in dist or cost_current < dist[point2]:
-                dist[point2] = cost_current
-                path_table[point2] = point1
-                heap.put((dist[point2], i, detail_points[i]))
+            cost_current = euclidian_distance(point1, point2)
+
+            if current_destination == destination_box:
+                cost_current += distf[point1] + euclidian_distance(point2, destination_point)
+            else:
+                cost_current += distb[point1] + euclidian_distance(point2, source_point)
+
+            if current_destination == source_box:
+                if point2 not in distb or cost_current < distb[point2]:
+                    distb[point2] = cost_current
+                    path_tableb[point2] = point1
+                    heap.put((distb[point2], i, detail_points[i], current_destination))
+
+            if current_destination == destination_box:
+                if point2 not in distf or cost_current < distf[point2]:
+                    distf[point2] = cost_current
+                    path_tablef[point2] = point1
+                    heap.put((distf[point2], i, detail_points[i], current_destination))
+            
 
 def range_construction(ranges, box_graph):
     # construction
